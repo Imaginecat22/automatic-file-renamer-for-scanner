@@ -1,0 +1,6 @@
+This python file should work in Windows (not complete as of yet -- August 9 2020).
+It scans my "My Documents" folder for new files, and renames them according for the 'name schema'.
+The name schema is given from a prompt at program start. Right now it is just a string, which attached a count number
+at the end. In the future, I hope to make this involve OCR to find titles and dates to make that the name, but that
+sounds pretty complicated for now.
+After spending 15 minutes (900 seconds) idle, the program will exit gracefully
