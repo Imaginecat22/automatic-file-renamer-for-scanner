@@ -51,14 +51,17 @@ from string import punctuation
 import en_core_web_lg
 nlp = en_core_web_lg.load()
 
-#import dateutil.parser as dparser
-
+import dateutil.parser as dparser
+import datetime
+import re
 
 #0 --------- verify file path
 
 def_watch_path = "C:/Users/Imagi/Documents"
+#def_watch_path = "C:\Users\Imagi\Documents"
 watch_path = input("Please input file path to watch: ")
 def_file_path = "C:/Users/Imagi/Documents/Scanned_Documents"
+#def_file_path = "C:\Users\Imagi\Documents\Scanned_Documents"
 file_path = input("Please input file path to place renamed document: ")
 
 if watch_path is "":
@@ -111,21 +114,31 @@ def get_hotwords(text):
 
 def myparse(text):
 	
-
-	#this gets 5 keywords from the text	
+	#this gets 5 keywords from the text
 	output = set(get_hotwords(text))
+	hottext = ""
 	count = 0
 	newfilename = ""
-	while count < 5:
-		for word in output:
+	#print("Hotwords: ", output)
+	regex = re.compile('/')
+	for word in output:
+		hottext += word
+		hottext += " "
+			
+		if (count < 5) and (regex.search(word) == None):
 			newfilename += word
+			if count < 4:
+				newfilename += "_"
 			count += 1
 			
+	print("New File Name: ", newfilename, ".pdf")
 	#this gets the date from the text (hopefully)
-	#date = dparser.parse(text, fuzzy=True)
+	date = dparser.parse(hottext, fuzzy=True)
 	
 	#together they make the new filename
-	#newfilename += date
+	newfilename += "["
+	newfilename += date.strftime("%Y-%m-%d")
+	newfilename += "]"
 	return newfilename
 		
 			
@@ -156,7 +169,8 @@ try:
 				if add.endswith(".pdf"):
 					outtext = textscheme(add, watch_path)
 					namescheme = myparse(outtext)
-					newname = file_path + "/" + namescheme + str(count) + ".pdf"
+					time.sleep(2)
+					newname = file_path + "/" + namescheme + ".pdf"
 					fp = watch_path + "/" + add
 					os.rename(fp, newname)
 					print(add + " Renamed as: " + namescheme)
