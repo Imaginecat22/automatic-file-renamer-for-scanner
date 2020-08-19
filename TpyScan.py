@@ -16,16 +16,16 @@ from threading import Timer
 import subprocess
 import pkg_resources
 
-required = {'win32file', 'win32event', 'win32con', 'pdfminer3', 'spacy'}
+#required = {'win32file', 'win32event', 'win32con', 'pdfminer3', 'spacy'}
+required = {'pdfminer3', 'spacy'}
 installed = {pkg.key for pkg in pkg_resources.working_set}
 missing = required - installed
 
 if missing:
 	python = sys.executable
 	subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+	#subprocess.check_call([python, '-m', 'spacy', 'download', 'en_core_web_lg'])
 
-if 'spacy' is in missing:
-	subprocess.check_call([python, '-m', 'spacy', 'download', 'en_core_web_lg'], stdout=subprocess.DEVNULL)
 
 #for folder watching
 import win32file
@@ -47,11 +47,11 @@ import io
 import spacy
 from collections import Counter
 from string import punctuation
-nlp = spacy.load("en_core_web_lg")
-#import en_core_web_lg
-#nlp = en_core_web_lg.load()
+#nlp = spacy.load("en_core_web_lg")
+import en_core_web_lg
+nlp = en_core_web_lg.load()
 
-import dateutil.parser as dparser
+#import dateutil.parser as dparser
 
 
 #0 --------- verify file path
@@ -80,14 +80,15 @@ def newtimer():
 #1 ---------
 
 #most of this is from: stackoverflow.com/questions/56494070/how-to-use-pdfminer-six-with-python-3
-def textscheme(filename):
+def textscheme(filename, watch_path):
 	resource_manager = PDFResourceManager()
 	fake_file_handle = io.StringIO()
 
 	converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
 	page_interpreter = PDFPageInterpreter(resource_manager, converter)
 
-	with open(filename, 'rb') as fh:
+	full_path = watch_path + '/' + filename
+	with open(full_path, 'rb') as fh:
 		for page in PDFPage.get_pages(fh, caching=True, check_extractable=True):
 			page_interpreter.process_page(page)
 		text = fake_file_handle.getvalue()
@@ -96,21 +97,20 @@ def textscheme(filename):
 	fake_file_handle.close()
 	return text
 
-
+#most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
 def get_hotwords(text):
 	result = []
 	pos_tag = ['PROPN', 'ADJ', 'NOUN']
 	doc = nlp(text.lower())
 	for token in doc:
 		if(token.text in nlp.Defaults.stop_words or token.text in punctuation):
-			continue:
+			continue
 		if(token.pos_ in pos_tag):
 			result.append(token.text)
 	return result
 
 def myparse(text):
-	#this gets the date from the text (hopefully)
-	date = dparser.parse(text, fuzzy=True)
+	
 
 	#this gets 5 keywords from the text	
 	output = set(get_hotwords(text))
@@ -120,9 +120,12 @@ def myparse(text):
 		for word in output:
 			newfilename += word
 			count += 1
-
-	#together they make the new filename	
-	newfilename += date
+			
+	#this gets the date from the text (hopefully)
+	#date = dparser.parse(text, fuzzy=True)
+	
+	#together they make the new filename
+	#newfilename += date
 	return newfilename
 		
 			
@@ -151,7 +154,7 @@ try:
 			time.sleep(2)
 			for add in added:
 				if add.endswith(".pdf"):
-					outtext = textscheme(add)
+					outtext = textscheme(add, watch_path)
 					namescheme = myparse(outtext)
 					newname = file_path + "/" + namescheme + str(count) + ".pdf"
 					fp = watch_path + "/" + add
