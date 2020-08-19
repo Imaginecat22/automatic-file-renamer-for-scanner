@@ -5,16 +5,34 @@
 #4. loop back to (2.)
 #5. If 15 minutes with no new files have passed, close
 
+
+
 import os
 import time
 import sys
 from threading import Timer
 
+#to install missing packages
+import subprocess
+import pkg_resources
+
+required = {'win32file', 'win32event', 'win32con', 'pdfminer3', 'spacy'}
+installed = {pkg.key for pkg in pkg_resources.working_set}
+missing = required - installed
+
+if missing:
+	python = sys.executable
+	subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+
+if 'spacy' is in missing:
+	subprocess.check_call([python, '-m', 'spacy', 'download', 'en_core_web_lg'], stdout=subprocess.DEVNULL)
 
 #for folder watching
 import win32file
 import win32event
 import win32con
+
+
 
 #for textscheme
 from pdfminer3.layout import LAParams, LTTextBox
