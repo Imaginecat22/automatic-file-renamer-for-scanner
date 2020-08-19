@@ -10,10 +10,13 @@ import time
 import sys
 from threading import Timer
 
+
+#for folder watching
 import win32file
 import win32event
 import win32con
 
+#for textscheme
 from pdfminer3.layout import LAParams, LTTextBox
 from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfinterp import PDFResourceManager
@@ -21,6 +24,18 @@ from pdfminer3.pdfinterp import PDFPageInterpreter
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.converter import TextConverter
 import io
+
+#for get_hotwords and myparse
+import spacy
+from collections import Counter
+from string import punctuation
+nlp = spacy.load("en_core_web_lg")
+#import en_core_web_lg
+#nlp = en_core_web_lg.load()
+
+import dateutil.parser as dparser
+
+
 #0 --------- verify file path
 
 def_watch_path = "C:/Users/Imagi/Documents"
@@ -45,6 +60,8 @@ def newtimer():
 	t = Timer(900.0, timeout)
 
 #1 ---------
+
+#most of this is from: stackoverflow.com/questions/56494070/how-to-use-pdfminer-six-with-python-3
 def textscheme(filename):
 	resource_manager = PDFResourceManager()
 	fake_file_handle = io.StringIO()
@@ -61,16 +78,35 @@ def textscheme(filename):
 	fake_file_handle.close()
 	return text
 
-#this needs to take the first 3 words of each document, then randomly select 3 words from the rest of the document,
-#then add the date at the end
+
+def get_hotwords(text):
+	result = []
+	pos_tag = ['PROPN', 'ADJ', 'NOUN']
+	doc = nlp(text.lower())
+	for token in doc:
+		if(token.text in nlp.Defaults.stop_words or token.text in punctuation):
+			continue:
+		if(token.pos_ in pos_tag):
+			result.append(token.text)
+	return result
+
 def myparse(text):
+	#this gets the date from the text (hopefully)
+	date = dparser.parse(text, fuzzy=True)
+
+	#this gets 5 keywords from the text	
+	output = set(get_hotwords(text))
 	count = 0
-	newname = ""
-	while count < 3:
-		for word in text:	
+	newfilename = ""
+	while count < 5:
+		for word in output:
+			newfilename += word
 			count += 1
-			newname += word			
-	#if count >= 3:
+
+	#together they make the new filename	
+	newfilename += date
+	return newfilename
+		
 			
 #2 ---------
 #2. Wait for new .pdf files to appear in the Documents directory
@@ -97,10 +133,12 @@ try:
 			time.sleep(2)
 			for add in added:
 				if add.endswith(".pdf"):
+					outtext = textscheme(add)
+					namescheme = myparse(outtext)
 					newname = file_path + "/" + namescheme + str(count) + ".pdf"
 					fp = watch_path + "/" + add
 					os.rename(fp, newname)
-					print(add + " Renamed!")
+					print(add + " Renamed as: " + namescheme)
 
 			old_path_contents = new_path_contents
 			win32file.FindNextChangeNotification (change_handle)
