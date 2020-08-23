@@ -14,18 +14,6 @@ from threading import Timer
 
 #to install missing packages
 import subprocess
-import pkg_resources
-
-#required = {'win32file', 'win32event', 'win32con', 'pdfminer3', 'spacy'}
-#required = {'pdfminer3', 'spacy'}
-#installed = {pkg.key for pkg in pkg_resources.working_set}
-#missing = required - installed
-
-#if missing:
-#	python = sys.executable
-#	subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
-	#subprocess.check_call([python, '-m', 'spacy', 'download', 'en_core_web_lg'])
-
 
 #for folder watching
 try:
@@ -167,7 +155,7 @@ def myparse(text):
                 newfilename += "["
                 newfilename += date.strftime("%Y-%m-%d")
                 newfilename += "]"
-        except:
+	except:
                 print("No Date Found")
 	return newfilename
 		
