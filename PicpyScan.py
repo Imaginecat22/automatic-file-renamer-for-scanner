@@ -1,12 +1,3 @@
-#This python script should do the following:
-#1. Ask user for the name scheme for files input
-#2. Wait for new .pdf files to appear in the Documents directory
-#3. Once they appear, rename the files and move to a different folder (just rename for now)
-#4. loop back to (2.)
-#5. If 15 minutes with no new files have passed, close
-
-
-
 import os
 import time
 import sys
@@ -35,19 +26,28 @@ except:
         import win32con
 
 
-#for textscheme
-try:
-	from pdfminer3.layout import LAParams, LTTextBox
-except:
-	subprocess.check_call([sys.executable, "-m", "pip", "install", "pdfminer3"])
-	from pdfminer3.layout import LAParams, LTTextBox
-
-from pdfminer3.pdfpage import PDFPage
-from pdfminer3.pdfinterp import PDFResourceManager
-from pdfminer3.pdfinterp import PDFPageInterpreter
-from pdfminer3.converter import PDFPageAggregator
-from pdfminer3.converter import TextConverter
 import io
+
+#for ocr and image processing
+try:
+	import pillow
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pillow"])
+        import pillow
+
+try:
+	import pytesseract
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytesseract"])
+	import pytesseract
+
+try:
+	import cv2
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python"])
+	import cv2
+	
+	
 
 #for get_hotwords and myparse
 try:
@@ -97,23 +97,12 @@ def newtimer():
 	t = Timer(900.0, timeout)
 
 #1 ---------
-
-#most of this is from: stackoverflow.com/questions/56494070/how-to-use-pdfminer-six-with-python-3
-def textscheme(filename, watch_path):
-	resource_manager = PDFResourceManager()
-	fake_file_handle = io.StringIO()
-
-	converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
-	page_interpreter = PDFPageInterpreter(resource_manager, converter)
-
+def ocr(filename, watch_path):
+	#img = cv2.imread(filename)
 	full_path = watch_path + '/' + filename
-	with open(full_path, 'rb') as fh:
-		for page in PDFPage.get_pages(fh, caching=True, check_extractable=True):
-			page_interpreter.process_page(page)
-		text = fake_file_handle.getvalue()
-
-	converter.close()
-	fake_file_handle.close()
+	#get grayscale image
+	#custom_config = r'--oem 3 --psm 6'
+	text = pyterreract.image_to_string(Image.open(full_path))    #img, config=custom_config)	
 	return text
 
 #most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
@@ -147,7 +136,7 @@ def myparse(text):
 				newfilename += "_"
 			count += 1
 			
-	print("New File Name: ", newfilename, ".pdf")
+	print("New File Name: ", newfilename, ".jpg")
 	#this gets the date from the text (hopefully)
 	try:
                 date = dparser.parse(hottext, fuzzy=True)
@@ -181,8 +170,8 @@ try:
 			added = [f for f in new_path_contents if not f in old_path_contents]
 			time.sleep(2)
 			for add in added:
-				if add.endswith(".pdf"):
-					outtext = textscheme(add, watch_path)
+				if add.endswith(".jpg"):
+					outtext = ocr(add, watch_path)
 					namescheme = myparse(outtext)
 					time.sleep(2)
 					newname = file_path + "/" + namescheme + ".pdf"
