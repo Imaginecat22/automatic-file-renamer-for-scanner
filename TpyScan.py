@@ -17,13 +17,13 @@ import subprocess
 import pkg_resources
 
 #required = {'win32file', 'win32event', 'win32con', 'pdfminer3', 'spacy'}
-required = {'pdfminer3', 'spacy'}
-installed = {pkg.key for pkg in pkg_resources.working_set}
-missing = required - installed
+#required = {'pdfminer3', 'spacy'}
+#installed = {pkg.key for pkg in pkg_resources.working_set}
+#missing = required - installed
 
-if missing:
-	python = sys.executable
-	subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+#if missing:
+#	python = sys.executable
+#	subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
 	#subprocess.check_call([python, '-m', 'spacy', 'download', 'en_core_web_lg'])
 
 
@@ -35,7 +35,12 @@ import win32con
 
 
 #for textscheme
-from pdfminer3.layout import LAParams, LTTextBox
+try:
+	from pdfminer3.layout import LAParams, LTTextBox
+except:
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "pdfminer3"])
+	from pdfminer3.layout import LAParams, LTTextBox
+
 from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfinterp import PDFResourceManager
 from pdfminer3.pdfinterp import PDFPageInterpreter
@@ -44,11 +49,21 @@ from pdfminer3.converter import TextConverter
 import io
 
 #for get_hotwords and myparse
-import spacy
+try:
+	import spacy
+except:
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "spacy"])
+	import spacy
+	
 from collections import Counter
 from string import punctuation
 #nlp = spacy.load("en_core_web_lg")
-import en_core_web_lg
+try:
+	import en_core_web_lg
+except:
+	subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_lg"])
+	import en_core_web_lg
+
 nlp = en_core_web_lg.load()
 
 import dateutil.parser as dparser
