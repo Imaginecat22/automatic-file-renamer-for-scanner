@@ -10,8 +10,10 @@ import subprocess
 try:
 	from pdf2image import convert_from_path
 except:
-	subprocess.check_call([sys.executable, "-m", "pip", "install", pdf2image])
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "pdf2image"])
+	subprocess.check_call(["conda", "install", "-c", "conda-forge", "poppler"])
 	from pdf2image import convert_from_path
+
 
 #for folder watching
 try:
@@ -110,11 +112,17 @@ def getfullpath(filename, watch_path):
 	return full_path
 
 def ocr_convert(file_path, full_path):
-	pages = convert_from_path(full_path, 600)
-	save_path = file_path + '/' + 'imgtemp'
+	pages = convert_from_path(file_path, 600)
+	save_path = full_path + '/' + 'imgtemp' 
+	#print("save path: ", save_path)
+	count = 0
 	for page in pages:
-		page.save(save_path, 'JPEG') 
-	
+		count += 1
+		#img_path = save_path + '/img_' + str(count) + '.jpg'
+		#print("imgpath: ", img_path)
+		img_path = 'img_' + str(count)
+		page.save(img_path, 'JPEG') 
+	#should I return img path, too?
 	return save_path
 
 
@@ -195,6 +203,7 @@ try:
 			for add in added:
 				if add.endswith(".pdf"):
 					fpath = getfullpath(add, watch_path)
+					print("fpath: ", fpath)
 					imgs_path = ocr_convert(fpath,file_path)
 					outtext = ocr(imgs_path)
 					namescheme = myparse(outtext)
