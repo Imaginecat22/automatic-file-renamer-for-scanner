@@ -28,10 +28,23 @@ import pkg_resources
 
 
 #for folder watching
-import win32file
-import win32event
-import win32con
+try:
+        import win32file
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"])
+        import win32file
 
+try:
+        import win32event
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "win32event"])
+        import win32event
+        
+try:
+        import win32con
+except:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "win32con"])
+        import win32con
 
 
 #for textscheme
@@ -72,11 +85,11 @@ import re
 
 #0 --------- verify file path
 
-def_watch_path = "C:/Users/Imagi/Documents"
-#def_watch_path = "C:\Users\Imagi\Documents"
+def_watch_path = "C:/Users/Imagi/OneDrive/Documents"
+#def_watch_path = "C:/Users/Imagi/Documents"
 watch_path = input("Please input file path to watch: ")
-def_file_path = "C:/Users/Imagi/Documents/Scanned_Documents"
-#def_file_path = "C:\Users\Imagi\Documents\Scanned_Documents"
+def_file_path = "C:/Users/Imagi/OneDrive/Documents/Scanned_Documents"
+#def_file_path = "C:/Users/Imagi/Documents/Scanned_Documents"
 file_path = input("Please input file path to place renamed document: ")
 
 if watch_path is "":
@@ -148,12 +161,14 @@ def myparse(text):
 			
 	print("New File Name: ", newfilename, ".pdf")
 	#this gets the date from the text (hopefully)
-	date = dparser.parse(hottext, fuzzy=True)
-	
-	#together they make the new filename
-	newfilename += "["
-	newfilename += date.strftime("%Y-%m-%d")
-	newfilename += "]"
+	try:
+                date = dparser.parse(hottext, fuzzy=True)
+                #together they make the new filename
+                newfilename += "["
+                newfilename += date.strftime("%Y-%m-%d")
+                newfilename += "]"
+        except:
+                print("No Date Found")
 	return newfilename
 		
 			
