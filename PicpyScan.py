@@ -120,7 +120,7 @@ def ocr_convert(file_path, full_path):
 		count += 1
 		#img_path = save_path + '/img_' + str(count) + '.jpg'
 		#print("imgpath: ", img_path)
-		img_path = 'img_' + str(count)
+		img_path = 'img_' + str(count) + '.jpg'
 		page.save(img_path, 'JPEG') 
 	#should I return img path, too?
 	return save_path
