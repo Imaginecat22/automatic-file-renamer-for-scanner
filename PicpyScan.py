@@ -6,6 +6,13 @@ from threading import Timer
 #to install missing packages
 import subprocess
 
+#to convert for OCR purposes
+try:
+	from pdf2image import convert_from_path
+except:
+	subprocess.check_call([sys.executable, "-m", "pip", "install", pdf2image])
+	from pdf2image import convert_from_path
+
 #for folder watching
 try:
         import win32file
@@ -97,12 +104,28 @@ def newtimer():
 	t = Timer(900.0, timeout)
 
 #1 ---------
-def ocr(filename, watch_path):
-	#img = cv2.imread(filename)
+
+def getfullpath(filename, watch_path):	
 	full_path = watch_path + '/' + filename
-	#get grayscale image
-	#custom_config = r'--oem 3 --psm 6'
-	text = pyterreract.image_to_string(Image.open(full_path))    #img, config=custom_config)	
+	return full_path
+
+def ocr_convert(file_path, full_path):
+	pages = convert_from_path(full_path, 600)
+	save_path = file_path + '/' + 'imgtemp'
+	for page in pages:
+		page.save(save_path, 'JPEG') 
+	
+	return save_path
+
+
+def ocr(save_path):
+	text = ''
+	for filename in os.listdir(save_path):	
+		img_path = save_path + '/' + filename
+		#img = cv2.imread(filename)
+		#get grayscale image
+		#custom_config = r'--oem 3 --psm 6'
+		text += pyterreract.image_to_string(Image.open(img_path))    #img, config=custom_config)	
 	return text
 
 #most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
@@ -168,12 +191,13 @@ try:
 			t.cancel()
 			new_path_contents = dict([(f, None) for f in os.listdir (watch_path)])
 			added = [f for f in new_path_contents if not f in old_path_contents]
-			time.sleep(2)
+			time.sleep(1)
 			for add in added:
-				if add.endswith(".jpg"):
-					outtext = ocr(add, watch_path)
+				if add.endswith(".pdf"):
+					fpath = getfullpath(add, watch_path)
+					imgs_path = ocr_convert(fpath,file_path)
+					outtext = ocr(imgs_path)
 					namescheme = myparse(outtext)
-					time.sleep(2)
 					newname = file_path + "/" + namescheme + ".pdf"
 					fp = watch_path + "/" + add
 					try:
