@@ -30,21 +30,21 @@ import io
 
 #for ocr and image processing
 try:
-	import pillow
+	from PIL import Image
 except:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pillow"])
-        import pillow
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow"])
+	from PIL import Image
 
 try:
 	import pytesseract
 except:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytesseract"])
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "pytesseract"])
 	import pytesseract
 
 try:
 	import cv2
 except:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python"])
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python"])
 	import cv2
 	
 	
