@@ -11,7 +11,7 @@ try:
 	from pdf2image import convert_from_path
 except:
 	subprocess.check_call([sys.executable, "-m", "pip", "install", "pdf2image"])
-	subprocess.check_call(["conda", "install", "-c", "conda-forge", "poppler"])
+	#subprocess.check_call(["conda", "install", "-c", "conda-forge", "poppler"])
 	from pdf2image import convert_from_path
 
 
@@ -49,6 +49,7 @@ try:
 except:
 	subprocess.check_call([sys.executable, "-m", "pip", "install", "pytesseract"])
 	import pytesseract
+pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
 try:
 	import cv2
@@ -114,13 +115,13 @@ def getfullpath(filename, watch_path):
 def ocr_convert(file_path, full_path):
 	pages = convert_from_path(file_path, 600)
 	save_path = full_path + '/' + 'imgtemp' 
-	#print("save path: ", save_path)
+	print("save path: ", save_path)
 	count = 0
 	for page in pages:
 		count += 1
-		#img_path = save_path + '/img_' + str(count) + '.jpg'
-		#print("imgpath: ", img_path)
-		img_path = 'img_' + str(count) + '.jpg'
+		img_path = save_path + '/img_' + str(count) + '.jpg'
+		print("imgpath: ", img_path)
+		#img_path = 'img_' + str(count) + '.jpg'
 		page.save(img_path, 'JPEG') 
 	#should I return img path, too?
 	return save_path
@@ -133,7 +134,7 @@ def ocr(save_path):
 		#img = cv2.imread(filename)
 		#get grayscale image
 		#custom_config = r'--oem 3 --psm 6'
-		text += pyterreract.image_to_string(Image.open(img_path))    #img, config=custom_config)	
+		text += pytesseract.image_to_string(Image.open(img_path))    #img, config=custom_config)	
 	return text
 
 #most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
