@@ -95,6 +95,8 @@ if watch_path is "":
 	
 if file_path is "":
 	file_path = def_file_path
+if not os.path.exists(file_path):
+	file_path = "C:/Users/Imagi/OneDrive/Documents/Scanned Documents"		
 
 print("Source Path Used: >" + watch_path)
 print("Destination Path Used: >" + file_path)
@@ -121,7 +123,6 @@ def ocr_convert(file_path, full_path):
 		count += 1
 		img_path = save_path + '/img_' + str(count) + '.jpg'
 		print("imgpath: ", img_path)
-		#img_path = 'img_' + str(count) + '.jpg'
 		page.save(img_path, 'JPEG') 
 	#should I return img path, too?
 	return save_path
@@ -168,7 +169,6 @@ def myparse(text):
 				newfilename += "_"
 			count += 1
 			
-	print("New File Name: ", newfilename, ".jpg")
 	#this gets the date from the text (hopefully)
 	try:
                 date = dparser.parse(hottext, fuzzy=True)
@@ -178,6 +178,8 @@ def myparse(text):
                 newfilename += "]"
 	except:
                 print("No Date Found")
+	
+	print("New File Name: ", newfilename, ".jpg")
 	return newfilename
 		
 			
