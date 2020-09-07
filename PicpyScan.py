@@ -3,6 +3,12 @@ import time
 import sys
 from threading import Timer
 
+#-----------------------
+#my file
+import preprocessing.py
+#---------------------
+
+
 #to install missing packages
 import subprocess
 
@@ -101,9 +107,6 @@ if not os.path.exists(file_path):
 print("Source Path Used: >" + watch_path)
 print("Destination Path Used: >" + file_path)
 #5. If 15 minutes (900 seconds) with no new files have passed, close
-def timeout():
-	sys.exit()
-
 def newtimer():
 	global t
 	t = Timer(900.0, timeout)
@@ -135,7 +138,11 @@ def ocr(save_path):
 		#img = cv2.imread(filename)
 		#get grayscale image
 		#custom_config = r'--oem 3 --psm 6'
-		text += pytesseract.image_to_string(Image.open(img_path))    #img, config=custom_config)	
+		image = Image.open(img_path)
+		ppgreyimage = getgreyscale(image)
+		ppdeskimage = preprocessing.deskew(ppimage)
+		text += pytesseract.image_to_string(ppdeskimage)    #img, config=custom_config)	
+		print("Full text: ", text)
 	return text
 
 #most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
@@ -150,34 +157,45 @@ def get_hotwords(text):
 			result.append(token.text)
 	return result
 
-def myparse(text):
+def myparse(text, scheme = "keywords"):
 	
 	#this gets 5 keywords from the text
-	output = set(get_hotwords(text))
-	hottext = ""
+	scheme = "firstwords"
+	if scheme == "keywords":
+		output = set(get_hotwords(text))
+	elif scheme == "firstwords":
+		tmptxt = text.split()
+		output = set(tmptxt)
+	
+	#hottext = ""
 	count = 0
 	newfilename = ""
-	#print("Hotwords: ", output)
+	print("Hotwords: ", output)
 	regex = re.compile('/')
+	wordcount = 5	
+	try:
+                date = dparser.parse(text, fuzzy=True)
+                #together they make the new filename
+	except:
+		wordcount = 7
+		print("No Date Found")
+	
 	for word in output:
-		hottext += word
-		hottext += " "
 			
-		if (count < 5) and (regex.search(word) == None):
-			newfilename += word
-			if count < 4:
+		if (count < wordcount) and (regex.search(word) == None):
+			if (count > 0):
 				newfilename += "_"
+			if word.isalpha() and len(word) > 3:
+				newfilename += word
+				newfilename += " "
+			#newfilename += word
 			count += 1
 			
 	#this gets the date from the text (hopefully)
-	try:
-                date = dparser.parse(hottext, fuzzy=True)
-                #together they make the new filename
+	if wordcount == 5:	
                 newfilename += "["
                 newfilename += date.strftime("%Y-%m-%d")
                 newfilename += "]"
-	except:
-                print("No Date Found")
 	
 	print("New File Name: ", newfilename, ".jpg")
 	return newfilename
@@ -189,20 +207,18 @@ def myparse(text):
 change_handle = win32file.FindFirstChangeNotification (watch_path,0,win32con.FILE_NOTIFY_CHANGE_FILE_NAME)
 
 
+timeout = time.time() + 60*5
 try:
 	old_path_contents = dict ([(f, None) for f in os.listdir (watch_path)])
 	#this 'while 1:' should be changed to while 15 minute wait timer has not been reached
-	newtimer()
-	t.start()
 	count = 0
 	while 1:
+		if time.time() > timeout:
+			sys.exit()	
 		result = win32event.WaitForSingleObject (change_handle, 500)
-			
 		if result == win32con.WAIT_OBJECT_0:
-			t.cancel()
 			new_path_contents = dict([(f, None) for f in os.listdir (watch_path)])
 			added = [f for f in new_path_contents if not f in old_path_contents]
-			time.sleep(1)
 			for add in added:
 				if add.endswith(".pdf"):
 					fpath = getfullpath(add, watch_path)
@@ -218,11 +234,10 @@ try:
 						print("File could not be renamed. Something went wrong. Terminating program.")
 						sys.exit()
 					print(add + " Renamed as: " + namescheme)
+					timeout = time.time() + 60*5
 
 			old_path_contents = new_path_contents
 			win32file.FindNextChangeNotification (change_handle)
-			newtimer()
-			t.start
 			count += 1
 			#I guess this is step 4
 
