@@ -5,7 +5,7 @@ from threading import Timer
 
 #-----------------------
 #my file
-import preprocessing.py
+import preprocessing
 #---------------------
 
 
@@ -86,6 +86,11 @@ nlp = en_core_web_lg.load()
 import dateutil.parser as dparser
 import datetime
 import re
+try:
+	import datefinder
+except:
+	subprocess.check_call([sys.executable, "-m", "pip", "install", "datefinder"])
+	import datefinder
 
 #0 --------- verify file path
 
@@ -95,6 +100,9 @@ watch_path = input("Please input file path to watch: ")
 def_file_path = "C:/Users/Imagi/OneDrive/Documents/Scanned_Documents"
 #def_file_path = "C:/Users/Imagi/Documents/Scanned_Documents"
 file_path = input("Please input file path to place renamed document: ")
+
+schema = input("Please input the schema: ")
+
 
 if watch_path is "":
 	watch_path = def_watch_path
@@ -138,17 +146,18 @@ def ocr(save_path):
 		#img = cv2.imread(filename)
 		#get grayscale image
 		#custom_config = r'--oem 3 --psm 6'
-		image = Image.open(img_path)
-		ppgreyimage = getgreyscale(image)
-		ppdeskimage = preprocessing.deskew(ppimage)
-		text += pytesseract.image_to_string(ppdeskimage)    #img, config=custom_config)	
+		#image = Image.open(img_path)
+		image = cv2.imread(img_path)
+		ppgreyimage = preprocessing.get_greyscale(image)
+		#ppdeskimage = preprocessing.deskew(ppimage)
+		text += pytesseract.image_to_string(ppgreyimage)    #img, config=custom_config)	
 		print("Full text: ", text)
 	return text
 
 #most of this is from medium.com/better-programming/extract-keywords-using-spacy-in-python-4a8415478fbf
 def get_hotwords(text):
 	result = []
-	pos_tag = ['PROPN', 'ADJ', 'NOUN']
+	pos_tag = ['PROPN'] #['PROPN', 'ADJ', 'NOUN']
 	doc = nlp(text.lower())
 	for token in doc:
 		if(token.text in nlp.Defaults.stop_words or token.text in punctuation):
@@ -160,7 +169,7 @@ def get_hotwords(text):
 def myparse(text, scheme = "keywords"):
 	
 	#this gets 5 keywords from the text
-	scheme = "firstwords"
+	#scheme = "firstwords"
 	if scheme == "keywords":
 		output = set(get_hotwords(text))
 	elif scheme == "firstwords":
@@ -170,12 +179,23 @@ def myparse(text, scheme = "keywords"):
 	#hottext = ""
 	count = 0
 	newfilename = ""
-	print("Hotwords: ", output)
+	print("All Hotwords: ", output)
+	san_output = [x[0] for x in Counter(output).most_common(5)] 
+	print("Sanitized Output: ", san_output)
 	regex = re.compile('/')
 	wordcount = 5	
 	try:
-                date = dparser.parse(text, fuzzy=True)
-                #together they make the new filename
+		print("outer try block")
+		try:
+			print("nested try block")
+			date = dparser.parse(text, fuzzy=True)
+		except:
+			print("nested except block")
+			dates = datefinder.find_dates(text)	
+			for d in dates:
+				print("date ", d)
+				#this will get the last date
+				date = d
 	except:
 		wordcount = 7
 		print("No Date Found")
@@ -197,7 +217,7 @@ def myparse(text, scheme = "keywords"):
                 newfilename += date.strftime("%Y-%m-%d")
                 newfilename += "]"
 	
-	print("New File Name: ", newfilename, ".jpg")
+	print("New File Name: ", newfilename, ".pdf")
 	return newfilename
 		
 			
@@ -207,7 +227,7 @@ def myparse(text, scheme = "keywords"):
 change_handle = win32file.FindFirstChangeNotification (watch_path,0,win32con.FILE_NOTIFY_CHANGE_FILE_NAME)
 
 
-timeout = time.time() + 60*5
+timeout = time.time() + (60*15)
 try:
 	old_path_contents = dict ([(f, None) for f in os.listdir (watch_path)])
 	#this 'while 1:' should be changed to while 15 minute wait timer has not been reached
@@ -233,8 +253,8 @@ try:
 					except:
 						print("File could not be renamed. Something went wrong. Terminating program.")
 						sys.exit()
-					print(add + " Renamed as: " + namescheme)
-					timeout = time.time() + 60*5
+					print(add + " Renamed as: " + newname)
+					timeout = time.time() + (60*15)
 
 			old_path_contents = new_path_contents
 			win32file.FindNextChangeNotification (change_handle)
