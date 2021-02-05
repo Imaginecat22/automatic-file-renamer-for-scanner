@@ -11,3 +11,13 @@ at the end.
 In the future, I hope to make this involve OCR to find titles and dates to make that the name.
 
 After spending 15 minutes (900 seconds) idle, the program should exit gracefully [I haven't tested this feature! 2020-08-18]
+
+-----------------------------------
+Notes:
+To run from tvpc: open Anaconda Powershell Prompt in Administrator mode
+navigate to the automatic document scanner folder 
+type:
+$python ./PicpyScan.py
+after it pulls up, hit enter a few times until it says waiting on document or something like that
+
+my new plan is to scan all the documents, then make a python script to rename them (after moving them to a folder) that way.
